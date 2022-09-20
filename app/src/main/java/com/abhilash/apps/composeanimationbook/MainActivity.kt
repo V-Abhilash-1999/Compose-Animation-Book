@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.abhilash.apps.composeanimationbook.ui.Animation
 import com.abhilash.apps.composeanimationbook.ui.HomeScreen
+import com.abhilash.apps.composeanimationbook.ui.animationscreen.SplitBubble
 import com.abhilash.apps.composeanimationbook.ui.theme.ComposeAnimationBookTheme
 
 class MainActivity : ComponentActivity() {
@@ -40,7 +41,7 @@ private fun AnimationNavigation() {
             composable(animation.animationName) {
                 when(animation) {
                     Animation.SPLIT_BUBBLE -> {
-
+                        SplitBubble()
                     }
                     else -> {
                         EmptyScreen(animationName = animation.animationName)
