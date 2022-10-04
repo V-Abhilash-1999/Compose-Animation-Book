@@ -3,5 +3,6 @@ package com.abhilash.apps.composeanimationbook.ui
 enum class Animation(
     val animationName: String
 ) {
-    SPLIT_BUBBLE("SPLIT_BUBBLE")
+    MITOSIS("MITOSIS"),
+    IMAGE_TO_IMAGE_TRANSITION("IMAGE TO IMAGE TRANSITION")
 }

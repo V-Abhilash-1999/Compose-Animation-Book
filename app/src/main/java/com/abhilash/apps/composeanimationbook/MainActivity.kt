@@ -16,7 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.abhilash.apps.composeanimationbook.ui.Animation
 import com.abhilash.apps.composeanimationbook.ui.HomeScreen
-import com.abhilash.apps.composeanimationbook.ui.animationscreen.SplitBubble
+import com.abhilash.apps.composeanimationbook.ui.animationscreen.ImageToImageTransition
+import com.abhilash.apps.composeanimationbook.ui.animationscreen.Mitosis
 import com.abhilash.apps.composeanimationbook.ui.theme.ComposeAnimationBookTheme
 
 class MainActivity : ComponentActivity() {
@@ -40,8 +41,11 @@ private fun AnimationNavigation() {
         Animation.values().forEach { animation ->
             composable(animation.animationName) {
                 when(animation) {
-                    Animation.SPLIT_BUBBLE -> {
-                        SplitBubble()
+                    Animation.MITOSIS -> {
+                        Mitosis()
+                    }
+                    Animation.IMAGE_TO_IMAGE_TRANSITION -> {
+                        ImageToImageTransition()
                     }
                     else -> {
                         EmptyScreen(animationName = animation.animationName)

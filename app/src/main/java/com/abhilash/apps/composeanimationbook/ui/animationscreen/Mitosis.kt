@@ -1,6 +1,5 @@
 package com.abhilash.apps.composeanimationbook.ui.animationscreen
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,9 +16,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.clipPath
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -32,7 +29,7 @@ import kotlin.math.sin
 
 
 @Composable
-fun SplitBubble() {
+fun Mitosis() {
     val scope = rememberCoroutineScope()
     val offsetFromCenter = IntOffset(150.dpToPx, 0.dpToPx)
     val animatable = remember {
@@ -217,18 +214,18 @@ fun MovingComposable(
                     sweepAngle = -90f
                 )
 
-//                clipPath(path = path, clipOp = ClipOp.Intersect) {
-                    drawPath(
-                        path = topPath,
-                        color = Color.Black
-                    )
-
-                    drawPath(
-                        path = bottomPath,
-                        color = Color.Black
-                    )
-//                }
 //                drawPath(path, Color.Red)
+                if (progress < 0.5f) {
+                    clipPath(path = topPath, clipOp = ClipOp.Difference) {
+                        clipPath(path = bottomPath, clipOp = ClipOp.Difference) {
+                            drawPath(
+                                path = path,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
+
 //                drawPath(topPath, Color.Green)
 //                drawPath(bottomPath, Color.Blue)
             }
@@ -263,13 +260,15 @@ private fun DrawScope.drawCustomArc(
     path.moveTo(x1, y1)
     path.cubicTo(x1, y1, pointX, pointY, x2, y2)
 
-
-//    drawPath(
-//        path = path,
-//        color= Color.White,
-//        style = Fill,
-//    )
     return path
+}
+
+
+
+private fun DrawScope.draw(
+
+) {
+
 }
 
 @Composable
