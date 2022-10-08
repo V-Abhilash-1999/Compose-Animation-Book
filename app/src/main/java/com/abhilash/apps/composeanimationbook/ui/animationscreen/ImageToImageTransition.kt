@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -253,10 +254,8 @@ fun DrawScope.drawBottomImage(
     context: Context,
     size: IntSize
 ) {
-    Log.e("drawBottomImage: ", "Drawing Back")
     val progress = point.value / this@drawBottomImage.size.height
 
-    val radius = (25 * progress).coerceIn(1f, 25f)
     val blurredImage = blurImage(context, image, 25f, progress)
     drawImage(
         image = image.asImageBitmap(), srcSize = IntSize(size.width, size.height)
@@ -270,8 +269,8 @@ fun DrawScope.drawBottomImage(
             (size.height * progress).toInt().coerceIn(1..blurredImage.height)
         )
         drawImage(
-            croppedBitmap.asImageBitmap(), srcSize =  IntSize(croppedBitmap.width, croppedBitmap.height)
-        )
+            croppedBitmap.asImageBitmap(), srcSize =  size
+         )
     }
 
 }
@@ -303,34 +302,4 @@ fun blurImage(
     outAlloc.copyTo(result)
     rsScript.destroy()
     return result
-}
-
-fun blurFast(bmp: Bitmap, radius: Int): Bitmap {
-    val w = bmp.width
-    val h = bmp.height
-    val pix = IntArray(w * h)
-    bmp.getPixels(pix, 0, w, 0, 0, w, h)
-    var r = radius
-    while (r >= 1) {
-        for (i in r until h - r) {
-            for (j in r until w - r) {
-                val tl = pix[(i - r) * w + j - r]
-                val tr = pix[(i - r) * w + j + r]
-                val tc = pix[(i - r) * w + j]
-                val bl = pix[(i + r) * w + j - r]
-                val br = pix[(i + r) * w + j + r]
-                val bc = pix[(i + r) * w + j]
-                val cl = pix[i * w + j - r]
-                val cr = pix[i * w + j + r]
-                pix[i * w + j] = -0x1000000 or (
-                        (tl and 0xFF) + (tr and 0xFF) + (tc and 0xFF) + (bl and 0xFF) + (br and 0xFF) + (bc and 0xFF) + (cl and 0xFF) + (cr and 0xFF) shr 3 and 0xFF) or (
-                        (tl and 0xFF00) + (tr and 0xFF00) + (tc and 0xFF00) + (bl and 0xFF00) + (br and 0xFF00) + (bc and 0xFF00) + (cl and 0xFF00) + (cr and 0xFF00) shr 3 and 0xFF00) or (
-                        (tl and 0xFF0000) + (tr and 0xFF0000) + (tc and 0xFF0000) + (bl and 0xFF0000) + (br and 0xFF0000) + (bc and 0xFF0000) + (cl and 0xFF0000) + (cr and 0xFF0000) shr 3 and 0xFF0000)
-            }
-        }
-        r /= 2
-    }
-    val secondaryBitmap = bmp.copy(bmp.config, true)
-    secondaryBitmap.setPixels(pix, 0, w, 0, 0, w, h)
-    return secondaryBitmap
 }

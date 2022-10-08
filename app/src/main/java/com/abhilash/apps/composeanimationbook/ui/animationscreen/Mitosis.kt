@@ -1,5 +1,6 @@
 package com.abhilash.apps.composeanimationbook.ui.animationscreen
 
+import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +18,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -31,16 +33,13 @@ import kotlin.math.sin
 @Composable
 fun Mitosis() {
     val scope = rememberCoroutineScope()
-    val offsetFromCenter = IntOffset(150.dpToPx, 0.dpToPx)
-    val animatable = remember {
-        Animatable(0f)
-    }
-    var horizontalAlignment by  remember { mutableStateOf(1f) }
-    val alignmentAnimated = animateFloatAsState(
-        targetValue = horizontalAlignment,
-        animationSpec = tween(durationMillis = 3000)
-    )
-    val alignment by animateHorizontalAlignmentAsState(alignmentAnimated.value)
+    val context = LocalContext.current
+
+    val offsetFromCenter = remember { mutableStateListOf<IntOffset>() }
+    val mitosisDrop = remember { mutableStateListOf<Animatable<Float, AnimationVector1D>>() }
+    val mitosisAlignment = remember { mutableStateListOf<Animatable<Float, AnimationVector1D>>() }
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -50,60 +49,86 @@ fun Mitosis() {
         Box(
             Modifier
                 .paddingInDp(32)
-                .height(48.dp)
+                .size(48.dp)
                 .graphicsLayer(shape = RoundedCornerShape(50), clip = false)
                 .background(Color.Black, RoundedCornerShape(50))
+                .align(Alignment.Center)
                 .clickable {
+                    val index = offsetFromCenter.size
+                    mitosisDrop.add(Animatable(0f))
+                    mitosisAlignment.add(Animatable(0f))
+                    offsetFromCenter.add(
+                        IntOffset(
+                            x = 150.dpToPx(context).toInt(),
+                            y = 0
+                        )
+                    )
                     scope.launch {
-//                        var animateAlign = false
-//                        if(horizontalAlignment == -1f) {
-//                            horizontalAlignment = 1f
-//                        } else {
-//                            animateAlign = true
-//                        }
-
-                        if (animatable.targetValue == 0f) {
-                            animatable.animateTo(
-                                1f,
-                                animationSpec = tween(durationMillis = 3000)
-                            )
-                        } else {
-                            animatable.animateTo(
-                                0f,
-                                animationSpec = tween(durationMillis = 3000)
-                            )
+                        val animSpec = tween<Float>(durationMillis = 3000)
+                        val onAnimationEnd: Animatable<Float, AnimationVector1D>.() -> Unit = {
+                            if (value == targetValue) {
+                                launch {
+                                    if (mitosisDrop[index].targetValue == 0f) {
+                                        mitosisDrop[index].animateTo(
+                                            1f,
+                                            initialVelocity = 100f,
+                                            animationSpec = animSpec
+                                        )
+                                    }
+                                }
+                            }
                         }
 
-//                        if(animateAlign && horizontalAlignment == 1f) {
-//                            horizontalAlignment = -1f
-//                        }
+                        if (mitosisAlignment[index].targetValue == 0f) {
+                            mitosisAlignment[index].animateTo(
+                                1f,
+                                animationSpec = tween(
+                                    durationMillis = 1000,
+                                    easing = FastOutSlowInEasing
+                                ),
+                                block = onAnimationEnd
+                            )
+                        }
                     }
                 },
             Alignment.Center,
         ) {
-            Text(
-                text = "                                     ",
-                color = Color.White
-            )
-
-            val animatedXValue = (animatable.value * offsetFromCenter.x).toInt()
-            val animatedYValue = (animatable.value * offsetFromCenter.y).toInt()
-
-            val offset  = IntOffset(animatedXValue, animatedYValue)
-
-            MovingComposable(
-                modifier = Modifier
-                    .offset { offset }
-                    .align(alignment),
-                offset = offset,
-                targetOffset = offsetFromCenter
-            )
+            offsetFromCenter.forEachIndexed { index, intOffset ->
+                MitosisDrop(
+                    mitosisDrop = mitosisDrop[index],
+                    alignment = animateHorizontalAlignmentAsState(targetBiasValue = mitosisAlignment[index].value).value,
+                    offsetFromCenter = intOffset
+                )
+            }
         }
     }
 }
 
 @Composable
-fun MovingComposable(
+private fun BoxScope.MitosisDrop(
+    mitosisDrop: Animatable<Float, AnimationVector1D>,
+    alignment: Alignment,
+    offsetFromCenter: IntOffset
+) {
+
+    val animatedXValue = (mitosisDrop.value * offsetFromCenter.x).toInt()
+    val animatedYValue = (mitosisDrop.value * offsetFromCenter.y).toInt()
+
+    val offset  = remember(animatedXValue, animatedYValue) {
+        IntOffset(animatedXValue, animatedYValue)
+    }
+
+    MovingComposable(
+        modifier = Modifier
+            .offset { offset }
+            .align(alignment),
+        offset = offset,
+        targetOffset = offsetFromCenter
+    )
+}
+
+@Composable
+private fun MovingComposable(
     modifier: Modifier,
     offset: IntOffset,
     targetOffset: IntOffset
@@ -113,36 +138,25 @@ fun MovingComposable(
         modifier = modifier
             .fillMaxHeight()
             .drawBehind {
+                val staticAngledY = targetOffset.y + 90f
+
+
                 val radius = size.height / 2
-                val staticTopAngle = 180f
+                val staticTopAngle = staticAngledY + 90
                 val staticTopPoint =
-                    //Offset(x = size.width / 2 - offset.x, y = 0f - offset.y - 15f)
                     Offset(
                         x = center.x - offset.x + (radius * sin((staticTopAngle * Math.PI).toFloat() / 180F)) - radius,
                         y = center.y - offset.y + (radius * cos((staticTopAngle * Math.PI).toFloat() / 180F))
                     )
 
 
-                val staticBottomAngle = 0f
+                val staticBottomAngle = staticAngledY - 90
                 val staticBottomPoint =
-                    //Offset(x = size.width / 2 - offset.x, y = size.height - offset.y + 15f)
                     Offset(
                         x = center.x - offset.x + radius * sin((staticBottomAngle * Math.PI).toFloat() / 180F) - radius,
                         y = center.y - offset.y + radius * cos((staticBottomAngle * Math.PI).toFloat() / 180F)
                     )
 
-
-//                drawCircle(
-//                    color = Color.Blue,
-//                    center = staticTopPoint,
-//                    radius = 10f
-//                )
-//
-//                drawCircle(
-//                    color = Color.Blue,
-//                    center = staticBottomPoint,
-//                    radius = 10f
-//                )
 
                 val progress = offset.x.toFloat() / targetOffset.x
 
@@ -150,7 +164,7 @@ fun MovingComposable(
                 val rect = Rect(
                     offset = Offset(
                         -offset.x + 10f,
-                        -offset.y + 0f
+                        -offset.y + targetOffset.y.toFloat()
                     ),
                     size = Size(
                         height = size.height,
@@ -159,42 +173,28 @@ fun MovingComposable(
                 )
                 path.addRect(rect)
 
-//                drawPath(
-//                    path = path,
-//                    color = Color.Black
-//                )
-
                 val staticArcHeight = radius * 2.4f
                 val arcHeight = (staticArcHeight * progress * 2).coerceAtMost(staticArcHeight)
                 drawCircle(
                     color = bgColor,
-                    center = center, //Offset.Zero,
+                    center = center,
                     radius = radius
                 )
 
-                val topAngle = 180f //225f
+
+                val angledY = offset.y + 90f
+
+                val topAngle = angledY + 90f
                 val movingTopAngledPoint = Offset(
                     x = center.x + radius * sin((topAngle * Math.PI).toFloat() / 180F),
                     y = center.y + radius * cos((topAngle * Math.PI).toFloat() / 180F)
                 )
 
-                val bottomAngle = 0f //315f
+                val bottomAngle = angledY - 90f
                 val movingBottomAngledPoint = Offset(
                     x = center.x + radius * sin((bottomAngle * Math.PI).toFloat() / 180F),
                     y = center.y + radius * cos((bottomAngle * Math.PI).toFloat() / 180F)
                 )
-
-//                drawCircle(
-//                    color = Color.Red,
-//                    center = movingTopAngledPoint,
-//                    radius = 10f
-//                )
-//
-//                drawCircle(
-//                    color = Color.Red,
-//                    center = movingBottomAngledPoint,
-//                    radius = 10f
-//                )
 
                 val topPath = drawCustomArc(
                     x1 = staticTopPoint.x,
@@ -214,7 +214,6 @@ fun MovingComposable(
                     sweepAngle = -90f
                 )
 
-//                drawPath(path, Color.Red)
                 if (progress < 0.5f) {
                     clipPath(path = topPath, clipOp = ClipOp.Difference) {
                         clipPath(path = bottomPath, clipOp = ClipOp.Difference) {
@@ -225,9 +224,6 @@ fun MovingComposable(
                         }
                     }
                 }
-
-//                drawPath(topPath, Color.Green)
-//                drawPath(bottomPath, Color.Blue)
             }
     ) {
         Text(
@@ -263,18 +259,10 @@ private fun DrawScope.drawCustomArc(
     return path
 }
 
-
-
-private fun DrawScope.draw(
-
-) {
-
-}
-
 @Composable
 private fun animateHorizontalAlignmentAsState(
     targetBiasValue: Float
 ): State<BiasAlignment> {
     val bias by animateFloatAsState(targetBiasValue)
-    return derivedStateOf { BiasAlignment(bias, bias) }
+    return remember { derivedStateOf { BiasAlignment(bias, bias) } }
 }
